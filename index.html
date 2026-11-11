@@ -511,7 +511,8 @@ try { const lp = localStorage.getItem("lastPhone"); if (lp) $("#tPhone").value =
 const STATUS_UZ = { yangi:"Qabul qilindi", jarayonda:"Ish jarayonida", tayyor:"Tayyor" };
 
 function orderCardHtml(o){
-  const pay = o.paid ? "Toʻlov tasdiqlandi ✓" : (o.has_receipt ? "Toʻlov cheki koʻrib chiqilmoqda" : "Toʻlov cheki hali yuborilmagan");
+  const rejected = !o.paid && !o.has_receipt && o.rejected;
+  const pay = o.paid ? "Toʻlov tasdiqlandi ✓" : (o.has_receipt ? "Toʻlov cheki koʻrib chiqilmoqda" : (rejected ? "Toʻlov cheki rad etildi. Iltimos, toʻgʻri chekni qayta yuboring" : "Toʻlov cheki hali yuborilmagan"));
   let h = `<div class="tcard"><p><b>${esc(o.service)}</b>${o.created_at ? ` <span class="note">· ${esc(fmtDate(o.created_at))}</span>` : ""}<br>Holat: <b>${esc(STATUS_UZ[o.status] || o.status)}</b><br>${esc(pay)}<br><span class="note">Kod: ${esc(o.code || "")}</span></p>`;
   if (o.result_url){
     const u = esc(o.result_url);
@@ -521,6 +522,9 @@ function orderCardHtml(o){
     h += o.confirmed ? `<p><b>Siz ishni qabul qilgansiz ✓</b></p>` : `<button class="btn small" type="button" data-confirm="${esc(o.code)}">Ishni qabul qildim, tasdiqlayman</button>`;
   } else if (o.status === "tayyor" && !o.paid){
     h += `<p class="note">Ish tayyor. Toʻlov tasdiqlangach natija shu yerda chiqadi.</p>`;
+  }
+  if (!o.paid && !o.has_receipt && o.id){
+    h += `<button class="btn small" type="button" data-resend="${esc(o.id)}">Toʻlov chekini yuborish</button>`;
   }
   return h + `</div>`;
 }
@@ -542,6 +546,24 @@ async function trackOrder(){
 $("#tBtn").addEventListener("click", trackOrder);
 $("#tPhone").addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); trackOrder(); } });
 $("#tResult").addEventListener("click", async e => {
+  const rs = e.target.closest("[data-resend]");
+  if (rs){
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*";
+    inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      if (!f.type.startsWith("image/")){ alert("Chek rasm (skrinshot) boʻlishi kerak."); return; }
+      if (f.size > 10 * 1024 * 1024){ alert("Rasm 10 MB dan katta."); return; }
+      rs.disabled = true; rs.textContent = "Yuborilmoqda...";
+      try {
+        const url = await db.upload(f, "receipts");
+        const { error } = await sb.rpc("attach_receipt", { p_order: rs.dataset.resend, p_url: url });
+        if (error) throw error;
+        try { await sb.functions.invoke("notify", { body: { order_id: rs.dataset.resend } }); } catch(_) {}
+        trackOrder();
+      } catch(ex){ alert("Chek yuborilmadi. Qayta urinib koʻring."); rs.disabled = false; rs.textContent = "Toʻlov chekini yuborish"; }
+    };
+    inp.click(); return;
+  }
   const cb = e.target.closest("[data-confirm]"); if (!cb) return;
   cb.disabled = true;
   const { error } = await sb.rpc("confirm_order", { p_code: cb.dataset.confirm, p_phone: $("#tPhone").value.trim() });
@@ -629,7 +651,12 @@ async function ordersHtml(){
         <small><label>Tayyor ishni yuklash: <input type="file" accept="video/*,image/*" data-result="${esc(o.id)}"></label></small>
       </div>
       <div class="btns">
-        <button class="btn ${o.paid ? "ghost " : ""}small" type="button" data-paid="${esc(o.id)}:${o.paid ? "0" : "1"}">${o.paid ? "Tasdiqni bekor qilish" : "Toʻlovni tasdiqlash"}</button>
+        ${o.paid
+          ? `<button class="btn ghost small" type="button" data-paid="${esc(o.id)}:0">Tasdiqni bekor qilish</button>`
+          : (o.receipt_url
+            ? `<button class="btn small" type="button" data-paid="${esc(o.id)}:1">Tasdiqlash</button>
+               <button class="btn danger small" type="button" data-reject="${esc(o.id)}">Rad etish</button>`
+            : `<span class="note">Chek kutilmoqda${o.pay_rejected ? " (oldingi chek rad etilgan)" : ""}</span>`)}
         <select data-status="${esc(o.id)}" aria-label="Holat">
           ${["yangi","jarayonda","tayyor"].map(s => `<option value="${s}" ${o.status===s?"selected":""}>${s[0].toUpperCase()+s.slice(1)}</option>`).join("")}
         </select>
@@ -725,6 +752,12 @@ $("#tabBody").addEventListener("click", async e => {
     }
     const pd = e.target.closest("[data-paid]");
     if (pd){ const [id, v] = pd.dataset.paid.split(":"); await db.save("orders", { id, paid: v === "1" }); renderTab(); }
+    const rj = e.target.closest("[data-reject]");
+    if (rj){
+      if (!confirm("Toʻlov cheki rad etilsinmi? Mijoz yangi chek yuborishi mumkin boʻladi.")) return;
+      await db.save("orders", { id: rj.dataset.reject, paid: false, receipt_url: null, pay_rejected: true });
+      renderTab();
+    }
     if (ed){ editing = ed.dataset.edit; await renderTab(); $("#tabBody").scrollIntoView({ behavior:"smooth" }); }
     if (cn){ editing = null; renderTab(); }
   } catch(ex){ alert("Amal bajarilmadi. Qayta urinib koʻring."); }
