@@ -98,6 +98,12 @@ textarea{min-height:96px;resize:vertical}
 .done{background:#E7F6EF;border:1.5px solid var(--ok);border-radius:12px;padding:18px;margin-top:18px}
 .done p{margin:0 0 12px}
 .err{color:#B3261E;font-weight:700;margin:0 0 12px}
+.pay{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:28px;max-width:640px}
+.pay h3{margin:0 0 6px;font-size:1.3rem}
+.cardnum{font:700 1.5rem/1.2 var(--body);letter-spacing:.06em;background:var(--lemon);border:1.5px solid var(--ink);border-radius:12px;padding:16px;margin:14px 0 6px;word-break:break-word}
+.cardown{font-weight:700;margin:0 0 14px}
+.pay .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.thumb{display:inline-block;margin-top:6px}
 
 footer{border-top:1px solid var(--line);padding:28px 0;color:var(--mute);font-size:.9rem}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -200,12 +206,27 @@ footer a{color:var(--mute)}
             <div class="field"><label for="oPhone">Telefon raqam</label><input id="oPhone" type="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required></div>
           </div>
           <div class="field"><label for="oService">Xizmat turi</label><select id="oService"></select></div>
+          <div class="field"><label for="oVideoFile">Videongiz (ixtiyoriy, 50 MB gacha)</label><input id="oVideoFile" type="file" accept="video/*,image/*"></div>
+          <div class="field"><label for="oVideoUrl">Yoki video havolasi (Google Drive, YouTube...)</label><input id="oVideoUrl" type="url" placeholder="https://..."></div>
           <div class="field"><label for="oNote">Nima kerak? (ixtiyoriy)</label><textarea id="oNote" placeholder="Masalan: 30 soniyalik reklama roligi, material bor"></textarea></div>
           <p class="err hidden" id="oErr"></p>
           <button class="btn" type="submit" id="oBtn">Buyurtmani yuborish</button>
         </form>
+        <div class="pay hidden" id="payBox">
+          <h3>Buyurtma qabul qilindi. Endi toʻlov qiling</h3>
+          <p class="note" id="payInfo"></p>
+          <p class="note">Quyidagi kartaga toʻlov qiling:</p>
+          <div class="cardnum" id="cardNum">6262 5701 3419 2691</div>
+          <p class="cardown">Boratova Zarnigor</p>
+          <div class="btns">
+            <button class="btn ghost small" type="button" id="copyCard">Karta raqamini nusxalash</button>
+            <button class="btn small" type="button" id="receiptBtn">Toʻlov chekini yuborish</button>
+          </div>
+          <input type="file" id="receiptFile" accept="image/*" class="hidden">
+          <p class="err hidden" id="rErr"></p>
+        </div>
         <div class="done hidden" id="oDone" style="max-width:640px" role="status">
-          <p><b>Buyurtmangiz qabul qilindi.</b> Tez orada siz bilan bogʻlanamiz. Telegramda yozsangiz, javob tezroq boʻladi.</p>
+          <p><b>Toʻlov cheki yuborildi.</b> Buyurtmangiz qabul qilindi, tez orada siz bilan bogʻlanamiz. Telegramda yozsangiz, javob tezroq boʻladi.</p>
           <a class="btn" id="tgBtn" href="#" target="_blank" rel="noopener">Telegramda yozish</a>
         </div>
       </div>
@@ -286,12 +307,12 @@ const db = {
     if (row.id){ const { id, ...rest } = row; const { error } = await sb.from(t).update(rest).eq("id", id); if (error) throw error; }
     else { const { error } = await sb.from(t).insert(row); if (error) throw error; }
   },
-  async upload(file){
+  async upload(file, bucket = "portfolio"){
     const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
     const path = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
-    const { error } = await sb.storage.from("portfolio").upload(path, file, { contentType: file.type, cacheControl: "31536000" });
+    const { error } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type, cacheControl: "31536000" });
     if (error) throw error;
-    return sb.storage.from("portfolio").getPublicUrl(path).data.publicUrl;
+    return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
   },
   async remove(t, id){ const { error } = await sb.from(t).delete().eq("id", id); if (error) throw error; },
   async saveSettings(obj){
@@ -362,28 +383,67 @@ document.addEventListener("click", e => {
   $("#oName").focus({ preventScroll:true });
 });
 
+let CUR_ORDER = null;
 $("#orderForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = $("#oName").value.trim(), phone = $("#oPhone").value.trim();
   const service = $("#oService").value, note = $("#oNote").value.trim();
+  const vFile = $("#oVideoFile").files[0], vUrl = $("#oVideoUrl").value.trim();
   const err = $("#oErr"); err.classList.add("hidden");
-  if (name.length < 2){ err.textContent = "Ismingizni kiriting."; err.classList.remove("hidden"); $("#oName").focus(); return; }
-  if (phone.replace(/\D/g, "").length < 9){ err.textContent = "Telefon raqamni toʻliq kiriting."; err.classList.remove("hidden"); $("#oPhone").focus(); return; }
-  const btn = $("#oBtn"); btn.disabled = true; btn.textContent = "Yuborilmoqda...";
+  const fail = (m, el) => { err.textContent = m; err.classList.remove("hidden"); if (el) el.focus(); };
+  if (name.length < 2) return fail("Ismingizni kiriting.", $("#oName"));
+  if (phone.replace(/\D/g, "").length < 9) return fail("Telefon raqamni toʻliq kiriting.", $("#oPhone"));
+  if (vFile && vFile.size > 50 * 1024 * 1024) return fail("Fayl 50 MB dan katta. Havola (Google Drive va h.k.) orqali yuboring.");
+  const btn = $("#oBtn"); btn.disabled = true;
   try {
-    await db.save("orders", { name, phone, service, note });
-    const text = `Salom! Saytdan buyurtma berdim.\nXizmat: ${service}\nIsm: ${name}\nTelefon: ${phone}` + (note ? `\nIzoh: ${note}` : "");
-    const tg = $("#tgBtn");
-    if (SETTINGS.telegram){
-      tg.classList.remove("hidden");
-      tg.href = `https://t.me/${tgUser(SETTINGS.telegram)}?text=${encodeURIComponent(text)}`;
-    } else tg.classList.add("hidden");
+    let video_url = vUrl;
+    if (vFile){ btn.textContent = "Video yuklanmoqda..."; video_url = await db.upload(vFile, "uploads"); }
+    btn.textContent = "Yuborilmoqda...";
+    const id = crypto.randomUUID();
+    await db.save("orders", { id, name, phone, service, note, video_url });
+    CUR_ORDER = { id, name, phone, service, note, video_url };
+    const svc = SERVICES.find(x => x.title === service);
+    $("#payInfo").textContent = svc ? `Xizmat: ${service} · Narxi: ${svc.price}. Aniq summani biz bilan kelishib oling.` : `Xizmat: ${service}`;
     $("#orderForm").classList.add("hidden");
+    $("#payBox").classList.remove("hidden");
+    $("#payBox").scrollIntoView({ behavior:"smooth", block:"center" });
+  } catch(ex){
+    fail("Buyurtma yuborilmadi. Internetni tekshirib, qayta urinib koʻring.");
+  } finally { btn.disabled = false; btn.textContent = "Buyurtmani yuborish"; }
+});
+
+$("#copyCard").addEventListener("click", async () => {
+  const b = $("#copyCard");
+  try { await navigator.clipboard.writeText("6262570134192691"); b.textContent = "Nusxalandi ✓"; }
+  catch(e){ b.textContent = "Raqamni qoʻlda belgilab nusxalang"; }
+  setTimeout(() => b.textContent = "Karta raqamini nusxalash", 2500);
+});
+
+$("#receiptBtn").addEventListener("click", () => $("#receiptFile").click());
+$("#receiptFile").addEventListener("change", async () => {
+  const f = $("#receiptFile").files[0]; if (!f || !CUR_ORDER) return;
+  const rErr = $("#rErr"), btn = $("#receiptBtn"); rErr.classList.add("hidden");
+  if (!f.type.startsWith("image/")){ rErr.textContent = "Chek rasm (skrinshot) boʻlishi kerak."; rErr.classList.remove("hidden"); return; }
+  if (f.size > 10 * 1024 * 1024){ rErr.textContent = "Rasm 10 MB dan katta."; rErr.classList.remove("hidden"); return; }
+  btn.disabled = true; btn.textContent = "Yuborilmoqda...";
+  try {
+    const url = await db.upload(f, "receipts");
+    const { error } = await sb.rpc("attach_receipt", { p_order: CUR_ORDER.id, p_url: url });
+    if (error) throw error;
+    try { await sb.functions.invoke("notify", { body: { order_id: CUR_ORDER.id } }); } catch(_) {}
+    const o = CUR_ORDER;
+    const text = `Salom! Saytdan buyurtma berdim va toʻlov qildim.\nXizmat: ${o.service}\nIsm: ${o.name}\nTelefon: ${o.phone}`;
+    const tg = $("#tgBtn");
+    if (SETTINGS.telegram){ tg.classList.remove("hidden"); tg.href = `https://t.me/${tgUser(SETTINGS.telegram)}?text=${encodeURIComponent(text)}`; }
+    else tg.classList.add("hidden");
+    $("#payBox").classList.add("hidden");
     $("#oDone").classList.remove("hidden");
   } catch(ex){
-    err.textContent = "Buyurtma yuborilmadi. Internetni tekshirib, qayta urinib koʻring.";
-    err.classList.remove("hidden");
-  } finally { btn.disabled = false; btn.textContent = "Buyurtmani yuborish"; }
+    rErr.textContent = "Chek yuborilmadi. Internetni tekshirib, qayta urinib koʻring.";
+    rErr.classList.remove("hidden");
+    btn.disabled = false; btn.textContent = "Toʻlov chekini yuborish";
+    $("#receiptFile").value = "";
+  }
 });
 
 /* ============ ADMIN ============ */
@@ -460,6 +520,8 @@ async function ordersHtml(){
         <b>${esc(o.name)}</b> — ${esc(o.service)}
         <small><a href="tel:${esc(String(o.phone).replace(/\s/g,""))}">${esc(o.phone)}</a> · ${esc(fmtDate(o.created_at))}</small>
         ${o.note ? `<small>${esc(o.note)}</small>` : ""}
+        ${o.video_url ? `<small>Video: <a href="${esc(o.video_url)}" target="_blank" rel="noopener">ochish</a></small>` : ""}
+        ${o.receipt_url ? `<small><b>Toʻlov cheki yuborilgan:</b> <a class="thumb" href="${esc(o.receipt_url)}" target="_blank" rel="noopener">koʻrish</a></small>` : "<small>Toʻlov cheki: hali yoʻq</small>"}
       </div>
       <div class="btns">
         <select data-status="${esc(o.id)}" aria-label="Holat">
