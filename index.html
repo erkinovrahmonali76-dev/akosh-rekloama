@@ -1,29 +1,461 @@
-# index.html da 3 ta joyni almashtiring
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Montaj Studio — video montaj, dizayn, reklama</title>
+<meta name="description" content="Video montaj, dizayn va reklama xizmatlari. Buyurtma qoldiring.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F5; --card:#FFFFFF; --ink:#101A33; --mute:#5A6580; --line:#C9D0DE;
+  --pink:#F0338C; --lemon:#FFD84D; --ok:#1E9E6A;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1rem/1.6 var(--body)}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.1;margin:0;letter-spacing:-.01em}
+.hidden{display:none!important}
+.top{position:sticky;top:0;z-index:20;background:rgba(237,240,245,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;height:60px}
+.brand{font:700 1.05rem var(--display);text-decoration:none;margin-right:auto}
+.top nav{display:flex;gap:22px}
+.top nav a{text-decoration:none;font-weight:500;color:var(--mute)}
+.top nav a:hover{color:var(--ink)}
+.btn{display:inline-block;border:2px solid var(--ink);background:var(--ink);color:#fff;font:700 .95rem var(--body);padding:10px 18px;border-radius:999px;cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--pink);border-color:var(--pink)}
+.btn:disabled{opacity:.6;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.small{padding:6px 12px;font-size:.85rem}
+.btn.danger{background:transparent;color:#B3261E;border-color:#B3261E}
+.btn.danger:hover{background:#B3261E;color:#fff}
+.hero{padding:64px 0 40px}
+.hero h1{font-size:clamp(2rem,6.4vw,4.6rem);max-width:15ch}
+.hero p{max-width:46ch;color:var(--mute);font-size:1.1rem;margin:22px 0 28px}
+.hero .actions{display:flex;gap:12px;flex-wrap:wrap}
+.timeline{position:relative;margin-top:48px;background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:34px 14px 14px;overflow:hidden}
+.ruler{position:absolute;left:0;right:0;top:0;height:22px;border-bottom:1px solid var(--line);background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 5%)}
+.track{position:relative;height:42px;margin-bottom:8px}
+.track:last-of-type{margin-bottom:0}
+.clip{position:absolute;top:0;height:100%;display:flex;align-items:center;padding:0 12px;border-radius:7px;font:700 .8rem var(--body);font-style:normal;white-space:nowrap;overflow:hidden}
+.k1{background:var(--ink);color:#fff}.k2{background:var(--pink);color:#fff}.k3{background:var(--lemon);color:var(--ink)}
+.tl-label{position:absolute;left:8px;top:-1px;font:500 .7rem var(--body);color:var(--mute)}
+.playhead{position:absolute;top:0;bottom:0;left:3%;width:2px;background:var(--pink);animation:sweep 3s cubic-bezier(.5,0,.3,1) .4s both}
+.playhead::before{content:"";position:absolute;top:0;left:-6px;width:14px;height:14px;background:var(--pink);clip-path:polygon(0 0,100% 0,50% 100%)}
+@keyframes sweep{from{left:3%}to{left:94%}}
+@media (prefers-reduced-motion:reduce){.playhead{animation:none;left:62%}html{scroll-behavior:auto}}
+section.block{padding:56px 0}
+.head{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+.head h2{font-size:clamp(1.5rem,3.6vw,2.2rem)}
+.head p{margin:0;color:var(--mute)}
+.rows{border-top:2px solid var(--ink)}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:20px;align-items:center;padding:20px 0;border-bottom:1px solid var(--line)}
+.row h3{font-size:1.1rem;margin-bottom:4px}
+.row p{margin:0;color:var(--mute);max-width:52ch}
+.price{font:700 1.05rem var(--display);white-space:nowrap}
+@media (max-width:680px){.row{grid-template-columns:1fr;gap:10px}.top nav{display:none}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.tile{display:block;text-decoration:none;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tile .media{aspect-ratio:4/5;background:var(--ink);display:flex;align-items:center;justify-content:center;position:relative}
+.tile img,.tile video{width:100%;height:100%;object-fit:cover;display:block}
+.tile .play{position:absolute;width:52px;height:52px;border-radius:50%;background:var(--pink);display:grid;place-items:center}
+.tile .play::after{content:"";border-left:16px solid #fff;border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px}
+.tile .cap{padding:12px 14px}
+.tile .cap b{display:block}
+.tile .cap span{color:var(--mute);font-size:.85rem}
+.empty{padding:28px;border:2px dashed var(--line);border-radius:12px;color:var(--mute);text-align:center}
+.formcard{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:28px;max-width:640px}
+label{display:block;font-weight:700;font-size:.9rem;margin:0 0 6px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px}
+input:focus,select:focus,textarea:focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 3px var(--lemon)}
+textarea{min-height:96px;resize:vertical}
+.field{margin-bottom:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.note{font-size:.85rem;color:var(--mute)}
+.done{background:#E7F6EF;border:1.5px solid var(--ok);border-radius:12px;padding:18px;margin-top:18px}
+.done p{margin:0 0 12px}
+.err{color:#B3261E;font-weight:700;margin:0 0 12px}
+.pay{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:28px;max-width:640px}
+.pay h3{margin:0 0 6px;font-size:1.3rem}
+.cardnum{font:700 1.5rem/1.2 var(--body);letter-spacing:.06em;background:var(--lemon);border:1.5px solid var(--ink);border-radius:12px;padding:16px;margin:14px 0 6px;word-break:break-word}
+.cardown{font-weight:700;margin:0 0 14px}
+.pay .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.thumb{display:inline-block;margin-top:6px}
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--mute);font-size:.9rem}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{color:var(--mute)}
+.adm{padding:28px 0 64px}
+.adm h1{font-size:1.6rem;margin-bottom:6px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.tabs button{border:2px solid var(--ink);background:transparent;color:var(--ink);font:700 .9rem var(--body);padding:8px 16px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.login{max-width:380px;margin:60px auto}
+.login .panel{border:2px solid var(--ink)}
+.item{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.item:last-child{border-bottom:0}
+.item .info{flex:1;min-width:220px}
+.item .info small{color:var(--mute);display:block}
+.item .btns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item select{width:auto;padding:6px 10px}
+.stat-yangi{border-left:5px solid var(--pink);padding-left:12px}
+.stat-jarayonda{border-left:5px solid var(--lemon);padding-left:12px}
+.stat-tayyor{border-left:5px solid var(--ok);padding-left:12px}
+.editor{background:var(--paper);border-radius:12px;padding:16px;margin-bottom:18px}
+.editor h3{font-size:1rem;margin-bottom:12px}
+</style>
+</head>
+<body>
 
-## 1) Admin: buyurtma kartasidagi birinchi tugmani (`data-paid=...`) shu ikkita tugmaga almashtiring
-```js
-        ${o.paid
-          ? `<button class="btn ghost small" type="button" data-pay="${esc(o.id)}:re">Tasdiqni bekor qilish</button>`
-          : `<button class="btn small" type="button" data-pay="${esc(o.id)}:ok">Toʻlovni tasdiqlash</button>
-             <button class="btn danger small" type="button" data-pay="${esc(o.id)}:no">Chekni rad etish</button>`}
-```
-Shu kartadagi "Kod: ..." satrini ham almashtiring:
-```js
-        <small>Kod: <b>${esc(o.code || "—")}</b> · ${o.paid ? "Toʻlov tasdiqlangan ✓" : (o.rejected ? "Chek rad etilgan ✗" : "Toʻlov tasdiqlanmagan")}${o.confirmed ? " · Mijoz qabul qildi ✓" : ""}</small>
-```
+<div id="setupMsg" class="hidden" style="max-width:560px;margin:80px auto;padding:0 20px">
+  <h1 style="font-size:1.4rem;margin-bottom:10px">Baza ulanmagan</h1>
+  <p>Sayt ishlashi uchun <code>CONFIG</code> qismiga Supabase URL va anon key kiriting.</p>
+</div>
 
-## 2) Admin: `const pd = e.target.closest("[data-paid]"); ...` qatorini almashtiring
-```js
-    const pd = e.target.closest("[data-pay]");
-    if (pd){
-      const [id, act] = pd.dataset.pay.split(":");
-      const patch = act === "ok" ? { paid:true, rejected:false } : act === "no" ? { paid:false, rejected:true } : { paid:false, rejected:false };
-      await db.save("orders", { id, ...patch }); renderTab();
+<div id="publicView">
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="#" id="brandTop">Montaj Studio</a>
+      <nav>
+        <a href="#xizmatlar">Xizmatlar</a>
+        <a href="#ishlar">Ishlar</a>
+        <a href="#buyurtma">Buyurtma</a>
+        <a href="#kuzatish">Buyurtmam</a>
+      </nav>
+      <a class="btn small" href="#buyurtma">Buyurtma berish</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <h1 id="heroTitle">Montaj, dizayn va reklama — tez va tartibli</h1>
+        <p id="heroSub">Buyurtma qoldiring, biz bogʻlanib narx va muddatni kelishamiz.</p>
+        <div class="actions">
+          <a class="btn" href="#buyurtma">Buyurtma qoldirish</a>
+          <a class="btn ghost" href="#ishlar">Ishlarni koʻrish</a>
+        </div>
+        <div class="timeline" aria-hidden="true">
+          <div class="ruler"></div>
+          <div class="track"><span class="tl-label">Video</span>
+            <i class="clip k1" style="left:8%;width:26%">Reels</i>
+            <i class="clip k2" style="left:36%;width:32%">YouTube video</i>
+            <i class="clip k3" style="left:70%;width:24%">Reklama roligi</i>
+          </div>
+          <div class="track"><span class="tl-label">Dizayn</span>
+            <i class="clip k3" style="left:14%;width:20%">Logo</i>
+            <i class="clip k1" style="left:40%;width:22%">Banner</i>
+            <i class="clip k2" style="left:66%;width:18%">Post</i>
+          </div>
+          <div class="track"><span class="tl-label">Ovoz</span>
+            <i class="clip k2" style="left:6%;width:40%">Musiqa va effektlar</i>
+            <i class="clip k1" style="left:50%;width:30%">Ovoz tozalash</i>
+          </div>
+          <div class="playhead"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="xizmatlar">
+      <div class="wrap">
+        <div class="head"><h2>Xizmatlar va narxlar</h2><p>Aniq narx ish hajmiga qarab kelishiladi.</p></div>
+        <div class="rows" id="servicesList"></div>
+      </div>
+    </section>
+
+    <section class="block" id="ishlar">
+      <div class="wrap">
+        <div class="head"><h2>Bajarilgan ishlar</h2></div>
+        <div class="grid" id="portfolioGrid"></div>
+      </div>
+    </section>
+
+    <section class="block" id="buyurtma">
+      <div class="wrap">
+        <div class="head"><h2>Buyurtma qoldirish</h2><p>Ikki daqiqa vaqt oladi.</p></div>
+        <form class="formcard" id="orderForm" novalidate>
+          <div class="two">
+            <div class="field"><label for="oName">Ismingiz</label><input id="oName" autocomplete="name" required></div>
+            <div class="field"><label for="oPhone">Telefon raqam</label><input id="oPhone" type="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required></div>
+          </div>
+          <div class="field"><label for="oService">Xizmat turi</label><select id="oService"></select></div>
+          <div class="field"><label for="oVideoFile">Videongiz (ixtiyoriy, 50 MB gacha)</label><input id="oVideoFile" type="file" accept="video/*,image/*"></div>
+          <div class="field"><label for="oVideoUrl">Yoki video havolasi (Google Drive, YouTube...)</label><input id="oVideoUrl" type="url" placeholder="https://..."></div>
+          <div class="field"><label for="oNote">Nima kerak? (ixtiyoriy)</label><textarea id="oNote" placeholder="Masalan: 30 soniyalik reklama roligi, material bor"></textarea></div>
+          <p class="err hidden" id="oErr"></p>
+          <button class="btn" type="submit" id="oBtn">Buyurtmani yuborish</button>
+        </form>
+        <div class="pay hidden" id="payBox">
+          <h3>Buyurtma qabul qilindi. Endi toʻlov qiling</h3>
+          <p class="note" id="payInfo"></p>
+          <p><b>Buyurtma kodingiz: <span id="payCode"></span></b> <span class="note">(saqlab qoʻying, natijani shu kod bilan olasiz)</span></p>
+          <p class="note">Quyidagi kartaga toʻlov qiling:</p>
+          <div class="cardnum" id="cardNum">6262 5701 3419 2691</div>
+          <p class="cardown">Boratova Zarnigor</p>
+          <div class="btns">
+            <button class="btn ghost small" type="button" id="copyCard">Karta raqamini nusxalash</button>
+            <button class="btn small" type="button" id="receiptBtn">Toʻlov chekini yuborish</button>
+          </div>
+          <input type="file" id="receiptFile" accept="image/*" class="hidden">
+          <p class="err hidden" id="rErr"></p>
+        </div>
+        <div class="done hidden" id="oDone" style="max-width:640px" role="status">
+          <p><b>Toʻlov cheki yuborildi.</b> Buyurtma kodingiz: <b id="doneCode"></b>. Admin toʻlovni tasdiqlagach, tayyor ishni "Buyurtmamni kuzatish" boʻlimidan olasiz. Buyurtmangiz qabul qilindi, tez orada siz bilan bogʻlanamiz. Telegramda yozsangiz, javob tezroq boʻladi.</p>
+          <a class="btn" id="tgBtn" href="#" target="_blank" rel="noopener">Telegramda yozish</a>
+        </div>
+      </div>
+    </section>
+    <section class="block" id="kuzatish">
+      <div class="wrap">
+        <div class="head"><h2>Buyurtmamni kuzatish</h2><p>Buyurtma kodi va telefon raqamingizni kiriting.</p></div>
+        <div class="formcard">
+          <div class="two">
+            <div class="field"><label for="tCode">Buyurtma kodi</label><input id="tCode" autocapitalize="characters" placeholder="ABC123"></div>
+            <div class="field"><label for="tPhone">Telefon raqam</label><input id="tPhone" type="tel" placeholder="+998 90 123 45 67"></div>
+          </div>
+          <p class="err hidden" id="tErr"></p>
+          <button class="btn" type="button" id="tBtn">Tekshirish</button>
+          <div id="tResult" class="hidden" style="margin-top:18px"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span id="footContacts"></span>
+      <a href="#admin">Admin</a>
+    </div>
+  </footer>
+</div>
+
+<div id="adminView" class="hidden">
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="#">Montaj Studio</a>
+      <a class="btn ghost small" href="#">Saytga qaytish</a>
+      <button class="btn small hidden" id="logoutBtn" type="button">Chiqish</button>
+    </div>
+  </header>
+  <div class="wrap">
+    <div class="login hidden" id="loginBox">
+      <div class="panel">
+        <h1 style="font-size:1.3rem;margin-bottom:14px">Admin kirish</h1>
+        <form id="loginForm">
+          <div class="field"><label for="aEmail">Email</label><input id="aEmail" type="email" autocomplete="username"></div>
+          <div class="field"><label for="aPass">Parol</label><input id="aPass" type="password" autocomplete="current-password"></div>
+          <p class="err hidden" id="aErr"></p>
+          <button class="btn" type="submit">Kirish</button>
+        </form>
+      </div>
+    </div>
+    <div class="adm hidden" id="adminApp">
+      <h1>Boshqaruv paneli</h1>
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="orders" aria-selected="true">Buyurtmalar</button>
+        <button role="tab" data-tab="services" aria-selected="false">Xizmatlar</button>
+        <button role="tab" data-tab="portfolio" aria-selected="false">Portfolio</button>
+        <button role="tab" data-tab="settings" aria-selected="false">Sozlamalar</button>
+      </div>
+      <div class="panel" id="tabBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ============ SOZLAMA ============ */
+const CONFIG = {
+  SUPABASE_URL: "https://cpzwrnpkbjolohkrjcyf.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_qy59CYGnnmw3lHo77mKFkg_Bn2q_6aR",
+  NOTIFY_FN: "notify"   // Supabase Edge Function nomi (aynan shunday yozilgan boʻlishi kerak)
+};
+
+const sb = (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && window.supabase)
+  ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY) : null;
+
+const DEF_SETTINGS = {
+  brand: "Montaj Studio",
+  headline: "Montaj, dizayn va reklama — tez va tartibli",
+  subline: "Buyurtma qoldiring, biz bogʻlanib narx va muddatni kelishamiz.",
+  telegram: "", phone: "", instagram: ""
+};
+
+/* ============ MA’LUMOTLAR QATLAMI ============ */
+const db = {
+  async list(t){
+    let q = sb.from(t).select("*");
+    q = t === "services" ? q.order("sort") : q.order("created_at", { ascending:false });
+    const { data, error } = await q; if (error) throw error; return data;
+  },
+  async settings(){
+    const { data, error } = await sb.from("settings").select("*"); if (error) throw error;
+    const o = {}; data.forEach(r => o[r.key] = r.value); return { ...DEF_SETTINGS, ...o };
+  },
+  async insert(t, row){ const { error } = await sb.from(t).insert(row); if (error) throw error; },
+  async save(t, row){
+    if (row.id){ const { id, ...rest } = row; const { error } = await sb.from(t).update(rest).eq("id", id); if (error) throw error; }
+    else { const { error } = await sb.from(t).insert(row); if (error) throw error; }
+  },
+  async upload(file, bucket = "portfolio"){
+    const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+    const { error } = await sb.storage.from(bucket).upload(path, file, { contentType: file.type, cacheControl: "31536000" });
+    if (error) throw error;
+    return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+  },
+  async remove(t, id){ const { error } = await sb.from(t).delete().eq("id", id); if (error) throw error; },
+  async saveSettings(obj){
+    const rows = Object.entries(obj).map(([key, value]) => ({ key, value }));
+    const { error } = await sb.from("settings").upsert(rows); if (error) throw error;
+  }
+};
+async function notifyAdmin(orderId){
+  try { await sb.functions.invoke(CONFIG.NOTIFY_FN, { body: { order_id: orderId } }); } catch(_) {}
+}
+
+/* ============ YORDAMCHILAR ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const tgUser = s => String(s || "").trim().replace(/^@/, "").replace(/^https?:\/\/t\.me\//, "");
+const fmtDate = iso => { try { return new Date(iso).toLocaleString("uz-UZ", { dateStyle:"medium", timeStyle:"short" }); } catch(e){ return ""; } };
+function ytId(url){ const m = String(url).match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{11})/); return m ? m[1] : null; }
+
+/* ============ OMMAVIY SAHIFA ============ */
+let SETTINGS = { ...DEF_SETTINGS };
+let SERVICES = [];
+
+async function loadPublic(){
+  try {
+    SETTINGS = await db.settings();
+    SERVICES = await db.list("services");
+    const works = await db.list("portfolio");
+    renderPublic(works);
+  } catch(e){
+    $("#servicesList").innerHTML = '<div class="empty">Ma’lumotlarni yuklab boʻlmadi. Sahifani yangilang.</div>';
+  }
+}
+
+function renderPublic(works){
+  document.title = SETTINGS.brand + " — video montaj, dizayn, reklama";
+  $("#brandTop").textContent = SETTINGS.brand;
+  $("#heroTitle").textContent = SETTINGS.headline;
+  $("#heroSub").textContent = SETTINGS.subline;
+
+  $("#servicesList").innerHTML = SERVICES.length ? SERVICES.map(s => `
+    <div class="row">
+      <div><h3>${esc(s.title)}</h3><p>${esc(s.description)}</p></div>
+      <div class="price">${esc(s.price)}</div>
+      <button class="btn ghost small" type="button" data-pick="${esc(s.title)}">Buyurtma</button>
+    </div>`).join("") : '<div class="empty">Xizmatlar tez orada qoʻshiladi.</div>';
+
+  $("#oService").innerHTML = SERVICES.map(s => `<option>${esc(s.title)}</option>`).join("") + "<option>Boshqa</option>";
+
+  $("#portfolioGrid").innerHTML = works.length ? works.map(w => {
+    let media; const href = w.media_url; const yt = ytId(w.media_url);
+    if (w.kind === "video" && yt) media = `<img src="https://img.youtube.com/vi/${yt}/hqdefault.jpg" alt="${esc(w.title)}" loading="lazy"><span class="play"></span>`;
+    else if (w.kind === "video") media = `<video src="${esc(w.media_url)}" muted playsinline preload="metadata"></video><span class="play"></span>`;
+    else media = `<img src="${esc(w.media_url)}" alt="${esc(w.title)}" loading="lazy">`;
+    return `<a class="tile" href="${esc(href)}" target="_blank" rel="noopener"><div class="media">${media}</div>
+      <div class="cap"><b>${esc(w.title)}</b><span>${esc(w.category)}</span></div></a>`;
+  }).join("") : '<div class="empty">Ishlar tez orada qoʻshiladi.</div>';
+
+  const parts = [];
+  if (SETTINGS.phone) parts.push(`<a href="tel:${esc(SETTINGS.phone.replace(/\s/g,""))}">${esc(SETTINGS.phone)}</a>`);
+  if (SETTINGS.telegram) parts.push(`<a href="https://t.me/${esc(tgUser(SETTINGS.telegram))}" target="_blank" rel="noopener">Telegram: @${esc(tgUser(SETTINGS.telegram))}</a>`);
+  if (SETTINGS.instagram) parts.push(`<a href="https://instagram.com/${esc(SETTINGS.instagram.replace(/^@/,""))}" target="_blank" rel="noopener">Instagram: @${esc(SETTINGS.instagram.replace(/^@/,""))}</a>`);
+  $("#footContacts").innerHTML = parts.length ? parts.join(" &nbsp; ") : esc(SETTINGS.brand);
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-pick]");
+  if (!b) return;
+  $("#oService").value = b.dataset.pick;
+  $("#buyurtma").scrollIntoView({ behavior:"smooth" });
+  $("#oName").focus({ preventScroll:true });
+});
+
+let CUR_ORDER = null;
+$("#orderForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = $("#oName").value.trim(), phone = $("#oPhone").value.trim();
+  const service = $("#oService").value, note = $("#oNote").value.trim();
+  const vFile = $("#oVideoFile").files[0], vUrl = $("#oVideoUrl").value.trim();
+  const err = $("#oErr"); err.classList.add("hidden");
+  const fail = (m, el) => { err.textContent = m; err.classList.remove("hidden"); if (el) el.focus(); };
+  if (name.length < 2) return fail("Ismingizni kiriting.", $("#oName"));
+  if (phone.replace(/\D/g, "").length < 9) return fail("Telefon raqamni toʻliq kiriting.", $("#oPhone"));
+  if (vFile && vFile.size > 50 * 1024 * 1024) return fail("Fayl 50 MB dan katta. Havola (Google Drive va h.k.) orqali yuboring.");
+  const btn = $("#oBtn"); btn.disabled = true;
+  try {
+    let video_url = vUrl;
+    if (vFile){ btn.textContent = "Video yuklanmoqda..."; video_url = await db.upload(vFile, "uploads"); }
+    btn.textContent = "Yuborilmoqda...";
+    const id = crypto.randomUUID();
+    const mkCode = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
+    let code = mkCode();
+    for (let i = 0; ; i++){
+      try { await db.insert("orders", { id, name, phone, service, note, video_url, code }); break; }
+      catch(er){ if (er && er.code === "23505" && i < 3){ code = mkCode(); } else throw er; }
     }
-```
+    CUR_ORDER = { id, name, phone, service, note, video_url, code };
+    try { localStorage.setItem("lastOrder", JSON.stringify({ code, phone })); } catch(_) {}
+    $("#payCode").textContent = code; $("#doneCode").textContent = code;
+    const svc = SERVICES.find(x => x.title === service);
+    $("#payInfo").textContent = svc ? `Xizmat: ${service} · Narxi: ${svc.price}. Aniq summani biz bilan kelishib oling.` : `Xizmat: ${service}`;
+    $("#orderForm").classList.add("hidden");
+    $("#payBox").classList.remove("hidden");
+    $("#payBox").scrollIntoView({ behavior:"smooth", block:"center" });
+  } catch(ex){
+    fail("Buyurtma yuborilmadi. Internetni tekshirib, qayta urinib koʻring.");
+  } finally { btn.disabled = false; btn.textContent = "Buyurtmani yuborish"; }
+});
 
-## 3) Kuzatish: `const STATUS_UZ ...` dan `$("#tBtn").addEventListener(...)` gacha butun blokni almashtiring
-```js
+$("#copyCard").addEventListener("click", async () => {
+  const b = $("#copyCard");
+  try { await navigator.clipboard.writeText("6262570134192691"); b.textContent = "Nusxalandi ✓"; }
+  catch(e){ b.textContent = "Raqamni qoʻlda belgilab nusxalang"; }
+  setTimeout(() => b.textContent = "Karta raqamini nusxalash", 2500);
+});
+
+$("#receiptBtn").addEventListener("click", () => $("#receiptFile").click());
+$("#receiptFile").addEventListener("change", async () => {
+  const f = $("#receiptFile").files[0]; if (!f || !CUR_ORDER) return;
+  const rErr = $("#rErr"), btn = $("#receiptBtn"); rErr.classList.add("hidden");
+  if (!f.type.startsWith("image/")){ rErr.textContent = "Chek rasm (skrinshot) boʻlishi kerak."; rErr.classList.remove("hidden"); return; }
+  if (f.size > 10 * 1024 * 1024){ rErr.textContent = "Rasm 10 MB dan katta."; rErr.classList.remove("hidden"); return; }
+  btn.disabled = true; btn.textContent = "Yuborilmoqda...";
+  try {
+    const url = await db.upload(f, "receipts");
+    const { error } = await sb.rpc("attach_receipt", { p_order: CUR_ORDER.id, p_url: url });
+    if (error) throw error;
+    await notifyAdmin(CUR_ORDER.id);
+    const o = CUR_ORDER;
+    const text = `Salom! Saytdan buyurtma berdim va toʻlov qildim.\nKod: ${o.code}\nXizmat: ${o.service}\nIsm: ${o.name}\nTelefon: ${o.phone}`;
+    const tg = $("#tgBtn");
+    if (SETTINGS.telegram){ tg.classList.remove("hidden"); tg.href = `https://t.me/${tgUser(SETTINGS.telegram)}?text=${encodeURIComponent(text)}`; }
+    else tg.classList.add("hidden");
+    $("#payBox").classList.add("hidden");
+    $("#oDone").classList.remove("hidden");
+  } catch(ex){
+    rErr.textContent = "Chek yuborilmadi. Internetni tekshirib, qayta urinib koʻring.";
+    rErr.classList.remove("hidden");
+    btn.disabled = false; btn.textContent = "Toʻlov chekini yuborish";
+    $("#receiptFile").value = "";
+  }
+});
+
+/* ============ BUYURTMANI KUZATISH ============ */
+try { const lo = JSON.parse(localStorage.getItem("lastOrder") || "null"); if (lo){ $("#tCode").value = lo.code || ""; $("#tPhone").value = lo.phone || ""; } } catch(_) {}
 const STATUS_UZ = { yangi:"Qabul qilindi", jarayonda:"Ish jarayonida", tayyor:"Tayyor" };
 async function trackOrder(){
   const code = $("#tCode").value.trim().toUpperCase(), phone = $("#tPhone").value.trim();
@@ -62,7 +494,7 @@ async function trackOrder(){
     });
 
     const rb = $("#reBtn"), rf = $("#reFile");
-    if (rb) {
+    if (rb){
       rb.addEventListener("click", () => rf.click());
       rf.addEventListener("change", async () => {
         const f = rf.files[0], re = $("#reErr"); if (!f) return; re.classList.add("hidden");
@@ -72,7 +504,7 @@ async function trackOrder(){
           const url = await db.upload(f, "receipts");
           const { data: oid, error: e3 } = await sb.rpc("attach_receipt_by_code", { p_code: code, p_phone: phone, p_url: url });
           if (e3 || !oid) throw e3 || new Error("no order");
-          try { await sb.functions.invoke("notify", { body: { order_id: oid } }); } catch(_) {}
+          await notifyAdmin(oid);
           trackOrder();
         } catch(ex){ re.textContent = "Chek yuborilmadi. Qayta urinib koʻring."; re.classList.remove("hidden"); rb.disabled = false; rb.textContent = "Toʻlov chekini yuborish"; }
       });
@@ -81,4 +513,235 @@ async function trackOrder(){
   finally { btn.disabled = false; btn.textContent = "Tekshirish"; }
 }
 $("#tBtn").addEventListener("click", trackOrder);
-```
+
+/* ============ ADMIN ============ */
+let tab = "orders";
+let editing = null;
+
+async function isLoggedIn(){ const { data } = await sb.auth.getSession(); return !!data.session; }
+async function showAdmin(){
+  $("#publicView").classList.add("hidden");
+  $("#adminView").classList.remove("hidden");
+  const ok = await isLoggedIn();
+  $("#loginBox").classList.toggle("hidden", ok);
+  $("#adminApp").classList.toggle("hidden", !ok);
+  $("#logoutBtn").classList.toggle("hidden", !ok);
+  if (ok) renderTab();
+}
+function showPublic(){
+  $("#adminView").classList.add("hidden");
+  $("#publicView").classList.remove("hidden");
+  loadPublic();
+}
+function route(){
+  if (!sb){
+    $("#publicView").classList.add("hidden"); $("#adminView").classList.add("hidden");
+    $("#setupMsg").classList.remove("hidden"); return;
+  }
+  location.hash === "#admin" ? showAdmin() : showPublic();
+}
+window.addEventListener("hashchange", () => { if (sb && (location.hash === "#admin" || !$("#adminView").classList.contains("hidden"))) route(); });
+
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const err = $("#aErr"); err.classList.add("hidden");
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email: $("#aEmail").value.trim(), password: $("#aPass").value });
+    if (error) throw error;
+    $("#aPass").value = "";
+    showAdmin();
+  } catch(ex){ err.textContent = "Email yoki parol notoʻgʻri."; err.classList.remove("hidden"); }
+});
+$("#logoutBtn").addEventListener("click", async () => { await sb.auth.signOut(); showAdmin(); });
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+  tab = b.dataset.tab; editing = null;
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", String(x === b)));
+  renderTab();
+}));
+
+async function renderTab(){
+  const body = $("#tabBody");
+  try {
+    if (tab === "orders") body.innerHTML = await ordersHtml();
+    if (tab === "services") body.innerHTML = await servicesHtml();
+    if (tab === "portfolio") body.innerHTML = await portfolioHtml();
+    if (tab === "settings") body.innerHTML = await settingsHtml();
+  } catch(e){ body.innerHTML = '<p class="err">Ma’lumotlarni yuklab boʻlmadi. Supabase sozlamalarini tekshiring.</p>'; }
+}
+
+async function ordersHtml(){
+  const list = await db.list("orders");
+  if (!list.length) return '<div class="empty">Hozircha buyurtma yoʻq. Yangi buyurtmalar shu yerda chiqadi.</div>';
+  return list.map(o => `
+    <div class="item stat-${esc(o.status || "yangi")}">
+      <div class="info">
+        <b>${esc(o.name)}</b> — ${esc(o.service)}
+        <small><a href="tel:${esc(String(o.phone).replace(/\s/g,""))}">${esc(o.phone)}</a> · ${esc(fmtDate(o.created_at))}</small>
+        ${o.note ? `<small>${esc(o.note)}</small>` : ""}
+        ${o.video_url ? `<small>Video: <a href="${esc(o.video_url)}" target="_blank" rel="noopener">ochish</a></small>` : ""}
+        ${o.receipt_url ? `<small><b>Toʻlov cheki yuborilgan:</b> <a class="thumb" href="${esc(o.receipt_url)}" target="_blank" rel="noopener">koʻrish</a></small>` : "<small>Toʻlov cheki: hali yoʻq</small>"}
+        <small>Kod: <b>${esc(o.code || "—")}</b> · ${o.paid ? "Toʻlov tasdiqlangan ✓" : (o.rejected ? "Chek rad etilgan ✗" : "Toʻlov tasdiqlanmagan")}${o.confirmed ? " · Mijoz qabul qildi ✓" : ""}</small>
+        ${o.result_url ? `<small>Tayyor ish: <a href="${esc(o.result_url)}" target="_blank" rel="noopener">koʻrish</a></small>` : ""}
+        <small><label>Tayyor ishni yuklash: <input type="file" accept="video/*,image/*" data-result="${esc(o.id)}"></label></small>
+      </div>
+      <div class="btns">
+        ${o.paid
+          ? `<button class="btn ghost small" type="button" data-pay="${esc(o.id)}:re">Tasdiqni bekor qilish</button>`
+          : `<button class="btn small" type="button" data-pay="${esc(o.id)}:ok">Toʻlovni tasdiqlash</button>
+             <button class="btn danger small" type="button" data-pay="${esc(o.id)}:no">Chekni rad etish</button>`}
+        <select data-status="${esc(o.id)}" aria-label="Holat">
+          ${["yangi","jarayonda","tayyor"].map(s => `<option value="${s}" ${o.status===s?"selected":""}>${s[0].toUpperCase()+s.slice(1)}</option>`).join("")}
+        </select>
+        <button class="btn danger small" data-del="orders:${esc(o.id)}" type="button">Oʻchirish</button>
+      </div>
+    </div>`).join("");
+}
+
+async function servicesHtml(){
+  const list = await db.list("services");
+  const e = editing && list.find(x => x.id === editing) || {};
+  return `
+    <form class="editor" id="svcForm">
+      <h3>${e.id ? "Xizmatni tahrirlash" : "Yangi xizmat"}</h3>
+      <input type="hidden" id="fId" value="${esc(e.id || "")}">
+      <div class="two">
+        <div class="field"><label for="fTitle">Nomi</label><input id="fTitle" required value="${esc(e.title || "")}"></div>
+        <div class="field"><label for="fPrice">Narxi</label><input id="fPrice" required placeholder="150 000 soʻmdan" value="${esc(e.price || "")}"></div>
+      </div>
+      <div class="field"><label for="fDesc">Qisqa tavsif</label><input id="fDesc" value="${esc(e.description || "")}"></div>
+      <button class="btn small" type="submit">Saqlash</button>
+      ${e.id ? '<button class="btn ghost small" type="button" data-cancel>Bekor qilish</button>' : ""}
+    </form>
+    ${list.length ? list.map(s => `
+      <div class="item">
+        <div class="info"><b>${esc(s.title)}</b> — ${esc(s.price)}<small>${esc(s.description)}</small></div>
+        <div class="btns">
+          <button class="btn ghost small" data-edit="${esc(s.id)}" type="button">Tahrirlash</button>
+          <button class="btn danger small" data-del="services:${esc(s.id)}" type="button">Oʻchirish</button>
+        </div>
+      </div>`).join("") : '<div class="empty">Xizmat yoʻq. Yuqoridagi shakl orqali qoʻshing.</div>'}`;
+}
+
+async function portfolioHtml(){
+  const list = await db.list("portfolio");
+  const e = editing && list.find(x => x.id === editing) || {};
+  return `
+    <form class="editor" id="pfForm">
+      <h3>${e.id ? "Ishni tahrirlash" : "Yangi ish qoʻshish"}</h3>
+      <input type="hidden" id="pId" value="${esc(e.id || "")}">
+      <div class="two">
+        <div class="field"><label for="pTitle">Nomi</label><input id="pTitle" required value="${esc(e.title || "")}"></div>
+        <div class="field"><label for="pCat">Turi</label><input id="pCat" placeholder="Reels, logo, reklama..." value="${esc(e.category || "")}"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="pKind">Format</label>
+          <select id="pKind"><option value="image" ${e.kind==="image"?"selected":""}>Rasm</option><option value="video" ${e.kind==="video"?"selected":""}>Video</option></select></div>
+        <div class="field"><label for="pUrl">Havola</label><input id="pUrl" type="url" placeholder="https://..." value="${esc(e.media_url || "")}"></div>
+      </div>
+      <div class="field"><label for="pFile">Yoki fayl yuklang (rasm / video)</label><input id="pFile" type="file" accept="image/*,video/*"></div>
+      <p class="note">Havola kiriting (YouTube, rasm, .mp4) yoki fayl tanlang. Fayl tanlansa, havola oʻrniga ishlatiladi.</p>
+      <button class="btn small" type="submit">Saqlash</button>
+      ${e.id ? '<button class="btn ghost small" type="button" data-cancel>Bekor qilish</button>' : ""}
+    </form>
+    ${list.length ? list.map(w => `
+      <div class="item">
+        <div class="info"><b>${esc(w.title)}</b> — ${esc(w.category)}<small>${esc(w.kind === "video" ? "Video" : "Rasm")} · ${esc(w.media_url)}</small></div>
+        <div class="btns">
+          <button class="btn ghost small" data-edit="${esc(w.id)}" type="button">Tahrirlash</button>
+          <button class="btn danger small" data-del="portfolio:${esc(w.id)}" type="button">Oʻchirish</button>
+        </div>
+      </div>`).join("") : '<div class="empty">Ish yoʻq. Yuqoridagi shakl orqali qoʻshing.</div>'}`;
+}
+
+async function settingsHtml(){
+  const s = await db.settings();
+  return `
+    <form id="setForm">
+      <div class="two">
+        <div class="field"><label for="sBrand">Sayt nomi</label><input id="sBrand" value="${esc(s.brand)}"></div>
+        <div class="field"><label for="sPhone">Telefon</label><input id="sPhone" placeholder="+998 90 123 45 67" value="${esc(s.phone)}"></div>
+      </div>
+      <div class="field"><label for="sHead">Bosh sarlavha</label><input id="sHead" value="${esc(s.headline)}"></div>
+      <div class="field"><label for="sSub">Sarlavha ostidagi matn</label><input id="sSub" value="${esc(s.subline)}"></div>
+      <div class="two">
+        <div class="field"><label for="sTg">Telegram username</label><input id="sTg" placeholder="@username" value="${esc(s.telegram)}"></div>
+        <div class="field"><label for="sIg">Instagram username</label><input id="sIg" placeholder="@username" value="${esc(s.instagram)}"></div>
+      </div>
+      <button class="btn small" type="submit">Saqlash</button>
+      <span class="note hidden" id="setOk"> Saqlandi.</span>
+    </form>`;
+}
+
+$("#tabBody").addEventListener("click", async e => {
+  const del = e.target.closest("[data-del]"), ed = e.target.closest("[data-edit]"), cn = e.target.closest("[data-cancel]");
+  const pd = e.target.closest("[data-pay]");
+  try {
+    if (del){
+      if (!confirm("Oʻchirilsinmi?")) return;
+      const [t, id] = del.dataset.del.split(":");
+      await db.remove(t, id); renderTab();
+    }
+    if (pd){
+      const [id, act] = pd.dataset.pay.split(":");
+      const patch = act === "ok" ? { paid:true, rejected:false } : act === "no" ? { paid:false, rejected:true } : { paid:false, rejected:false };
+      await db.save("orders", { id, ...patch }); renderTab();
+    }
+    if (ed){ editing = ed.dataset.edit; await renderTab(); $("#tabBody").scrollIntoView({ behavior:"smooth" }); }
+    if (cn){ editing = null; renderTab(); }
+  } catch(ex){ alert("Amal bajarilmadi. Qayta urinib koʻring."); }
+});
+$("#tabBody").addEventListener("change", async e => {
+  const rf = e.target.closest("[data-result]");
+  if (rf && rf.files[0]){
+    const f = rf.files[0];
+    if (f.size > 50 * 1024 * 1024){ alert("Fayl 50 MB dan katta. Boshqa joyga yuklab, havolasini bering."); return; }
+    rf.disabled = true;
+    try { const url = await db.upload(f, "results"); await db.save("orders", { id: rf.dataset.result, result_url: url, status: "tayyor" }); renderTab(); }
+    catch(ex){ alert("Yuklanmadi. Qayta urinib koʻring."); rf.disabled = false; }
+    return;
+  }
+  const st = e.target.closest("[data-status]");
+  if (!st) return;
+  try { await db.save("orders", { id: st.dataset.status, status: st.value }); renderTab(); }
+  catch(ex){ alert("Holat saqlanmadi."); }
+});
+$("#tabBody").addEventListener("submit", async e => {
+  e.preventDefault();
+  try {
+    if (e.target.id === "svcForm"){
+      const id = $("#fId").value;
+      const row = { title: $("#fTitle").value.trim(), price: $("#fPrice").value.trim(), description: $("#fDesc").value.trim() };
+      if (id){ row.id = id; }
+      else { const all = await db.list("services"); row.sort = all.reduce((m, x) => Math.max(m, x.sort || 0), 0) + 1; }
+      await db.save("services", row); editing = null; renderTab();
+    }
+    if (e.target.id === "pfForm"){
+      const id = $("#pId").value;
+      const file = $("#pFile").files[0];
+      let kind = $("#pKind").value, url = $("#pUrl").value.trim();
+      if (file){
+        if (file.size > 50 * 1024 * 1024){ alert("Fayl 50 MB dan katta boʻlmasligi kerak."); return; }
+        const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = "Yuklanmoqda...";
+        try { url = await db.upload(file); kind = file.type.startsWith("video") ? "video" : "image"; }
+        finally { btn.disabled = false; btn.textContent = "Saqlash"; }
+      }
+      if (!url){ alert("Havola kiriting yoki fayl tanlang."); return; }
+      const row = { title: $("#pTitle").value.trim(), category: $("#pCat").value.trim(), kind, media_url: url };
+      if (id) row.id = id;
+      await db.save("portfolio", row); editing = null; renderTab();
+    }
+    if (e.target.id === "setForm"){
+      await db.saveSettings({
+        brand: $("#sBrand").value.trim() || DEF_SETTINGS.brand, phone: $("#sPhone").value.trim(),
+        headline: $("#sHead").value.trim() || DEF_SETTINGS.headline, subline: $("#sSub").value.trim(),
+        telegram: $("#sTg").value.trim(), instagram: $("#sIg").value.trim()
+      });
+      $("#setOk").classList.remove("hidden");
+    }
+  } catch(ex){ alert("Saqlanmadi. Maʼlumotlarni va ulanishni tekshiring."); }
+});
+
+route();
+</script>
+</body>
+</html>
