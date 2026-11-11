@@ -286,6 +286,13 @@ const db = {
     if (row.id){ const { id, ...rest } = row; const { error } = await sb.from(t).update(rest).eq("id", id); if (error) throw error; }
     else { const { error } = await sb.from(t).insert(row); if (error) throw error; }
   },
+  async upload(file){
+    const ext = (file.name.split(".").pop() || "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const path = Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+    const { error } = await sb.storage.from("portfolio").upload(path, file, { contentType: file.type, cacheControl: "31536000" });
+    if (error) throw error;
+    return sb.storage.from("portfolio").getPublicUrl(path).data.publicUrl;
+  },
   async remove(t, id){ const { error } = await sb.from(t).delete().eq("id", id); if (error) throw error; },
   async saveSettings(obj){
     const rows = Object.entries(obj).map(([key, value]) => ({ key, value }));
@@ -503,9 +510,10 @@ async function portfolioHtml(){
       <div class="two">
         <div class="field"><label for="pKind">Format</label>
           <select id="pKind"><option value="image" ${e.kind==="image"?"selected":""}>Rasm</option><option value="video" ${e.kind==="video"?"selected":""}>Video</option></select></div>
-        <div class="field"><label for="pUrl">Havola</label><input id="pUrl" type="url" required placeholder="https://..." value="${esc(e.media_url || "")}"></div>
+        <div class="field"><label for="pUrl">Havola</label><input id="pUrl" type="url" placeholder="https://..." value="${esc(e.media_url || "")}"></div>
       </div>
-      <p class="note">Rasm uchun toʻgʻridan-toʻgʻri rasm havolasi, video uchun YouTube havolasi yoki .mp4 havolasi kiriting.</p>
+      <div class="field"><label for="pFile">Yoki fayl yuklang (rasm / video)</label><input id="pFile" type="file" accept="image/*,video/*"></div>
+      <p class="note">Havola kiriting (YouTube, rasm, .mp4) yoki telefon/kompyuterdan fayl tanlang. Fayl tanlansa, havola oʻrniga ishlatiladi.</p>
       <button class="btn small" type="submit">Saqlash</button>
       ${e.id ? '<button class="btn ghost small" type="button" data-cancel>Bekor qilish</button>' : ""}
     </form>
@@ -569,7 +577,16 @@ $("#tabBody").addEventListener("submit", async e => {
     }
     if (e.target.id === "pfForm"){
       const id = $("#pId").value;
-      const row = { title: $("#pTitle").value.trim(), category: $("#pCat").value.trim(), kind: $("#pKind").value, media_url: $("#pUrl").value.trim() };
+      const file = $("#pFile").files[0];
+      let kind = $("#pKind").value, url = $("#pUrl").value.trim();
+      if (file){
+        if (file.size > 50 * 1024 * 1024){ alert("Fayl 50 MB dan katta boʻlmasligi kerak."); return; }
+        const btn = e.target.querySelector('button[type="submit"]'); btn.disabled = true; btn.textContent = "Yuklanmoqda...";
+        try { url = await db.upload(file); kind = file.type.startsWith("video") ? "video" : "image"; }
+        finally { btn.disabled = false; btn.textContent = "Saqlash"; }
+      }
+      if (!url){ alert("Havola kiriting yoki fayl tanlang."); return; }
+      const row = { title: $("#pTitle").value.trim(), category: $("#pCat").value.trim(), kind, media_url: url };
       if (id) row.id = id;
       await db.save("portfolio", row); editing = null; renderTab();
     }
