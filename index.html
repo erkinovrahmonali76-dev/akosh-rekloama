@@ -383,7 +383,9 @@ $("#orderForm").addEventListener("submit", async e => {
     $("#orderForm").classList.add("hidden");
     $("#oDone").classList.remove("hidden");
   } catch(ex){
-    err.textContent = "Buyurtma yuborilmadi. Internetni tekshirib, qayta urinib koʻring.";
+    console.error("Buyurtma yuborish xatosi:", ex);
+    const detail = ex?.message || ex?.error_description || ex?.details || "Noma’lum xatolik";
+    err.textContent = "Buyurtma yuborilmadi: " + detail;
     err.classList.remove("hidden");
   } finally { btn.disabled = false; btn.textContent = "Buyurtmani yuborish"; }
 });
