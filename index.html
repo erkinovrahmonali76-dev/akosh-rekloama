@@ -202,8 +202,11 @@ footer a{color:var(--mute)}
         <div class="formcard" style="max-width:640px;margin-bottom:18px;background:#fff8dc">
           <h3 style="font-size:1.05rem;margin-bottom:10px">To‘lov rekvizitlari</h3>
           <p style="margin:0 0 8px"><b>Karta egasi:</b> Boratova Zarnigor</p>
-          <p style="margin:0 0 8px"><b>Karta:</b> 6262 •••• •••• 2691</p>
-          <p class="note" style="margin:0">Xavfsizlik uchun to‘liq karta raqami saytda ochiq ko‘rsatilmaydi. To‘lov qilishdan oldin karta egasi va summani Telegram orqali tasdiqlang. To‘lovdan keyin chekni buyurtma formasiga yuklang.</p>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px">
+            <p id="paymentCardNumber" style="font-size:1.15rem;font-weight:800;letter-spacing:1px;margin:0">6262 5701 3419 2691</p>
+            <button class="btn small" id="copyPaymentCard" type="button">Karta raqamini nusxalash</button>
+          </div>
+          <p class="note" style="margin:0">To‘lovdan oldin karta egasi va summani tekshiring. To‘lovdan keyin chekni buyurtma formasiga yuklang. To‘liq karta raqamini faqat karta egasining roziligi bilan saytda e’lon qiling.</p>
         </div>
         <form class="formcard" id="orderForm" novalidate>
           <div class="two">
@@ -377,6 +380,30 @@ function renderPublic(works){
   if (SETTINGS.instagram) parts.push(`<a href="https://instagram.com/${esc(SETTINGS.instagram.replace(/^@/,""))}" target="_blank" rel="noopener">Instagram: @${esc(SETTINGS.instagram.replace(/^@/,""))}</a>`);
   $("#footContacts").innerHTML = parts.length ? parts.join(" &nbsp; ") : esc(SETTINGS.brand);
 }
+
+document.getElementById("copyPaymentCard")?.addEventListener("click", async () => {
+  const cardNumber = "6262 5701 3419 2691";
+  const button = document.getElementById("copyPaymentCard");
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(cardNumber);
+    } else {
+      const temp = document.createElement("textarea");
+      temp.value = cardNumber;
+      temp.style.position = "fixed";
+      temp.style.opacity = "0";
+      document.body.appendChild(temp);
+      temp.select();
+      const copied = document.execCommand("copy");
+      temp.remove();
+      if (!copied) throw new Error("Nusxalash amalga oshmadi");
+    }
+    button.textContent = "Nusxalandi!";
+    setTimeout(() => { button.textContent = "Karta raqamini nusxalash"; }, 1800);
+  } catch (err) {
+    alert("Karta raqamini nusxalab bo‘lmadi. Raqamni qo‘lda belgilang.");
+  }
+});
 
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-pick]");
