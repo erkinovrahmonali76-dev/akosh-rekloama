@@ -499,7 +499,8 @@ $("#receiptFile").addEventListener("change", async () => {
     $("#payBox").classList.add("hidden");
     $("#oDone").classList.remove("hidden");
   } catch(ex){
-    rErr.textContent = "Chek yuborilmadi. Internetni tekshirib, qayta urinib koʻring.";
+    console.error("Chek xatosi:", ex);
+    rErr.textContent = "Chek yuborilmadi. Internetni tekshirib, qayta urinib koʻring. [" + ((ex && (ex.message || ex.error_description)) || "xato") + "]";
     rErr.classList.remove("hidden");
     btn.disabled = false; btn.textContent = "Toʻlov chekini yuborish";
     $("#receiptFile").value = "";
@@ -573,7 +574,7 @@ $("#tResult").addEventListener("click", async e => {
         if (error) throw error;
         await notifyAdmin(rs.dataset.resend);
         trackOrder();
-      } catch(ex){ alert("Chek yuborilmadi. Qayta urinib koʻring."); rs.disabled = false; rs.textContent = "Toʻlov chekini yuborish"; }
+      } catch(ex){ console.error("Chek xatosi:", ex); alert("Chek yuborilmadi. Qayta urinib koʻring. [" + ((ex && ex.message) || "xato") + "]"); rs.disabled = false; rs.textContent = "Toʻlov chekini yuborish"; }
     };
     inp.click(); return;
   }
