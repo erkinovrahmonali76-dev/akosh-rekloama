@@ -623,26 +623,16 @@ $("#orderForm").addEventListener("submit",async e=>{
     */
     if(selectedPrice)orderPayload.price=selectedPrice;
 
-    let insertResult=await sb.from("orders")
-      .insert(orderPayload)
-      .select("id,customer_code,price")
-      .single();
-
-    /*
-      Eski orders jadvalida price ustuni bo‘lmasa, bir marta price
-      ustunisiz qayta urinadi.
-    */
-    if(insertResult.error && /price/i.test(insertResult.error.message||"")){
-      delete orderPayload.price;
-      insertResult=await sb.from("orders")
-        .insert(orderPayload)
-        .select("id,customer_code")
-        .single();
+    // Buyurtmani SECURITY DEFINER RPC orqali yaratamiz.
+    // Bu INSERT ... RETURNING sababli yuzaga keladigan SELECT/RLS
+    // to‘sig‘ini chetlab o‘tadi; jadvalga ommaviy SELECT ochilmaydi.
+    const {data:order,error:insertError}=await sb.rpc("create_order_secure",{
+      p_order:orderPayload
+    });
+    if(insertError)throw insertError;
+    if(!order || !order.customer_code){
+      throw new Error("Buyurtma yaratildi, lekin kod qaytmadi. Supabase SQL yangilanishini tekshiring.");
     }
-
-    if(insertResult.error)throw insertResult.error;
-
-    const order=insertResult.data;
 
     saveOrderAccess(phone,order.customer_code,order.id);
 
