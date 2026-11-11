@@ -97,6 +97,7 @@ textarea{min-height:96px;resize:vertical}
 .note{font-size:.85rem;color:var(--mute)}
 .done{background:#E7F6EF;border:1.5px solid var(--ok);border-radius:12px;padding:18px;margin-top:18px}
 .done p{margin:0 0 12px}
+.done .btns{display:flex;gap:10px;flex-wrap:wrap}
 .err{color:#B3261E;font-weight:700;margin:0 0 12px}
 .pay{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:28px;max-width:640px}
 .pay h3{margin:0 0 6px;font-size:1.3rem}
@@ -104,6 +105,11 @@ textarea{min-height:96px;resize:vertical}
 .cardown{font-weight:700;margin:0 0 14px}
 .pay .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 .thumb{display:inline-block;margin-top:6px}
+
+/* kuzatish: buyurtmalar kartalari */
+.tcard{border:1.5px solid var(--line);border-radius:12px;padding:16px;margin-top:14px;background:#fff}
+.tcard p{margin:0 0 10px}
+.tcard:first-child{margin-top:0}
 
 footer{border-top:1px solid var(--line);padding:28px 0;color:var(--mute);font-size:.9rem}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -216,31 +222,32 @@ footer a{color:var(--mute)}
         <div class="pay hidden" id="payBox">
           <h3>Buyurtma qabul qilindi. Endi toʻlov qiling</h3>
           <p class="note" id="payInfo"></p>
-          <p><b>Buyurtma kodingiz: <span id="payCode"></span></b> <span class="note">(saqlab qoʻying, natijani shu kod bilan olasiz)</span></p>
+          <p><b>Buyurtma kodingiz: <span id="payCode"></span></b> <span class="note">(kerak boʻlsa saqlab qoʻying)</span></p>
           <p class="note">Quyidagi kartaga toʻlov qiling:</p>
           <div class="cardnum" id="cardNum">6262 5701 3419 2691</div>
           <p class="cardown">Boratova Zarnigor</p>
           <div class="btns">
             <button class="btn ghost small" type="button" id="copyCard">Karta raqamini nusxalash</button>
             <button class="btn small" type="button" id="receiptBtn">Toʻlov chekini yuborish</button>
+            <button class="btn ghost small" type="button" id="newOrderLater">Keyin toʻlayman, yangi buyurtma berish</button>
           </div>
           <input type="file" id="receiptFile" accept="image/*" class="hidden">
           <p class="err hidden" id="rErr"></p>
         </div>
         <div class="done hidden" id="oDone" style="max-width:640px" role="status">
-          <p><b>Toʻlov cheki yuborildi.</b> Buyurtma kodingiz: <b id="doneCode"></b>. Admin toʻlovni tasdiqlagach, tayyor ishni "Buyurtmamni kuzatish" boʻlimidan olasiz. Buyurtmangiz qabul qilindi, tez orada siz bilan bogʻlanamiz. Telegramda yozsangiz, javob tezroq boʻladi.</p>
-          <a class="btn" id="tgBtn" href="#" target="_blank" rel="noopener">Telegramda yozish</a>
+          <p><b>Toʻlov cheki yuborildi.</b> Buyurtma kodingiz: <b id="doneCode"></b>. Admin toʻlovni tasdiqlagach, tayyor ishni "Buyurtmamni kuzatish" boʻlimidan telefon raqamingiz bilan olasiz. Buyurtmangiz qabul qilindi, tez orada siz bilan bogʻlanamiz. Telegramda yozsangiz, javob tezroq boʻladi.</p>
+          <div class="btns">
+            <a class="btn" id="tgBtn" href="#" target="_blank" rel="noopener">Telegramda yozish</a>
+            <button class="btn ghost" type="button" id="newOrderBtn">Yana buyurtma berish</button>
+          </div>
         </div>
       </div>
     </section>
     <section class="block" id="kuzatish">
       <div class="wrap">
-        <div class="head"><h2>Buyurtmamni kuzatish</h2><p>Buyurtma kodi va telefon raqamingizni kiriting.</p></div>
+        <div class="head"><h2>Buyurtmamni kuzatish</h2><p>Telefon raqamingizni kiriting, barcha buyurtmalaringiz chiqadi.</p></div>
         <div class="formcard">
-          <div class="two">
-            <div class="field"><label for="tCode">Buyurtma kodi</label><input id="tCode" autocapitalize="characters" placeholder="ABC123"></div>
-            <div class="field"><label for="tPhone">Telefon raqam</label><input id="tPhone" type="tel" placeholder="+998 90 123 45 67"></div>
-          </div>
+          <div class="field"><label for="tPhone">Telefon raqam</label><input id="tPhone" type="tel" autocomplete="tel" placeholder="+998 90 123 45 67"></div>
           <p class="err hidden" id="tErr"></p>
           <button class="btn" type="button" id="tBtn">Tekshirish</button>
           <div id="tResult" class="hidden" style="margin-top:18px"></div>
@@ -394,12 +401,37 @@ function renderPublic(works){
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-pick]");
   if (!b) return;
+  resetOrderUI(true);
   $("#oService").value = b.dataset.pick;
   $("#buyurtma").scrollIntoView({ behavior:"smooth" });
   $("#oName").focus({ preventScroll:true });
 });
 
 let CUR_ORDER = null;
+
+/* Yangi buyurtma uchun shaklni qayta tiklash.
+   keepContact=true boʻlsa ism va telefon saqlanib qoladi. */
+function resetOrderUI(keepContact){
+  const name = $("#oName").value, phone = $("#oPhone").value;
+  $("#orderForm").reset();
+  if (keepContact){ $("#oName").value = name; $("#oPhone").value = phone; }
+  $("#oErr").classList.add("hidden");
+  $("#rErr").classList.add("hidden");
+  $("#receiptFile").value = "";
+  const rb = $("#receiptBtn"); rb.disabled = false; rb.textContent = "Toʻlov chekini yuborish";
+  $("#payBox").classList.add("hidden");
+  $("#oDone").classList.add("hidden");
+  $("#orderForm").classList.remove("hidden");
+  CUR_ORDER = null;
+}
+function startNewOrder(){
+  resetOrderUI(true);
+  $("#buyurtma").scrollIntoView({ behavior:"smooth" });
+  $("#oService").focus({ preventScroll:true });
+}
+$("#newOrderBtn").addEventListener("click", startNewOrder);
+$("#newOrderLater").addEventListener("click", startNewOrder);
+
 $("#orderForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = $("#oName").value.trim(), phone = $("#oPhone").value.trim();
@@ -423,10 +455,15 @@ $("#orderForm").addEventListener("submit", async e => {
       catch(er){ if (er && er.code === "23505" && i < 3){ code = mkCode(); } else throw er; }
     }
     CUR_ORDER = { id, name, phone, service, note, video_url, code };
-    try { localStorage.setItem("lastOrder", JSON.stringify({ code, phone })); } catch(_) {}
+    try { localStorage.setItem("lastPhone", phone); } catch(_) {}
+    $("#tPhone").value = phone;
     $("#payCode").textContent = code; $("#doneCode").textContent = code;
     const svc = SERVICES.find(x => x.title === service);
     $("#payInfo").textContent = svc ? `Xizmat: ${service} · Narxi: ${svc.price}. Aniq summani biz bilan kelishib oling.` : `Xizmat: ${service}`;
+    $("#rErr").classList.add("hidden");
+    const rb = $("#receiptBtn"); rb.disabled = false; rb.textContent = "Toʻlov chekini yuborish";
+    $("#receiptFile").value = "";
+    $("#oDone").classList.add("hidden");
     $("#orderForm").classList.add("hidden");
     $("#payBox").classList.remove("hidden");
     $("#payBox").scrollIntoView({ behavior:"smooth", block:"center" });
@@ -469,40 +506,47 @@ $("#receiptFile").addEventListener("change", async () => {
   }
 });
 
-/* ============ BUYURTMANI KUZATISH ============ */
-try { const lo = JSON.parse(localStorage.getItem("lastOrder") || "null"); if (lo){ $("#tCode").value = lo.code || ""; $("#tPhone").value = lo.phone || ""; } } catch(_) {}
+/* ============ BUYURTMALARNI KUZATISH (faqat telefon raqam bilan) ============ */
+try { const lp = localStorage.getItem("lastPhone"); if (lp) $("#tPhone").value = lp; } catch(_) {}
 const STATUS_UZ = { yangi:"Qabul qilindi", jarayonda:"Ish jarayonida", tayyor:"Tayyor" };
+
+function orderCardHtml(o){
+  const pay = o.paid ? "Toʻlov tasdiqlandi ✓" : (o.has_receipt ? "Toʻlov cheki koʻrib chiqilmoqda" : "Toʻlov cheki hali yuborilmagan");
+  let h = `<div class="tcard"><p><b>${esc(o.service)}</b>${o.created_at ? ` <span class="note">· ${esc(fmtDate(o.created_at))}</span>` : ""}<br>Holat: <b>${esc(STATUS_UZ[o.status] || o.status)}</b><br>${esc(pay)}<br><span class="note">Kod: ${esc(o.code || "")}</span></p>`;
+  if (o.result_url){
+    const u = esc(o.result_url);
+    h += /\.(mp4|mov|webm)(\?|$)/i.test(o.result_url) ? `<video src="${u}" controls playsinline style="width:100%;max-width:420px;border-radius:12px"></video>`
+       : /\.(jpe?g|png|webp|gif)(\?|$)/i.test(o.result_url) ? `<img src="${u}" alt="Tayyor ish" style="width:100%;max-width:420px;border-radius:12px">` : "";
+    h += `<p style="margin-top:10px"><a class="btn small" href="${u}" target="_blank" rel="noopener" download>Tayyor ishni ochish / yuklab olish</a></p>`;
+    h += o.confirmed ? `<p><b>Siz ishni qabul qilgansiz ✓</b></p>` : `<button class="btn small" type="button" data-confirm="${esc(o.code)}">Ishni qabul qildim, tasdiqlayman</button>`;
+  } else if (o.status === "tayyor" && !o.paid){
+    h += `<p class="note">Ish tayyor. Toʻlov tasdiqlangach natija shu yerda chiqadi.</p>`;
+  }
+  return h + `</div>`;
+}
+
 async function trackOrder(){
-  const code = $("#tCode").value.trim().toUpperCase(), phone = $("#tPhone").value.trim();
+  const phone = $("#tPhone").value.trim();
   const err = $("#tErr"), box = $("#tResult"); err.classList.add("hidden"); box.classList.add("hidden");
-  if (code.length < 4 || phone.replace(/\D/g, "").length < 9){ err.textContent = "Kod va telefon raqamni kiriting."; err.classList.remove("hidden"); return; }
+  if (phone.replace(/\D/g, "").length < 9){ err.textContent = "Telefon raqamni toʻliq kiriting."; err.classList.remove("hidden"); return; }
   const btn = $("#tBtn"); btn.disabled = true; btn.textContent = "Tekshirilmoqda...";
   try {
-    const { data, error } = await sb.rpc("track_order", { p_code: code, p_phone: phone });
+    const { data, error } = await sb.rpc("track_orders", { p_phone: phone });
     if (error) throw error;
-    if (!data){ err.textContent = "Buyurtma topilmadi. Kod va telefonni tekshiring."; err.classList.remove("hidden"); return; }
-    const pay = data.paid ? "Toʻlov tasdiqlandi ✓" : (data.has_receipt ? "Toʻlov cheki koʻrib chiqilmoqda" : "Toʻlov cheki hali yuborilmagan");
-    let h = `<p><b>${esc(data.service)}</b><br>Holat: <b>${esc(STATUS_UZ[data.status] || data.status)}</b><br>${esc(pay)}</p>`;
-    if (data.result_url){
-      const u = esc(data.result_url);
-      h += /\.(mp4|mov|webm)(\?|$)/i.test(data.result_url) ? `<video src="${u}" controls playsinline style="width:100%;max-width:420px;border-radius:12px"></video>`
-         : /\.(jpe?g|png|webp|gif)(\?|$)/i.test(data.result_url) ? `<img src="${u}" alt="Tayyor ish" style="width:100%;max-width:420px;border-radius:12px">` : "";
-      h += `<p><a class="btn small" href="${u}" target="_blank" rel="noopener" download>Tayyor ishni ochish / yuklab olish</a></p>`;
-      h += data.confirmed ? `<p><b>Siz ishni qabul qilgansiz ✓</b></p>` : `<button class="btn small" type="button" id="confirmBtn">Ishni qabul qildim, tasdiqlayman</button>`;
-    } else if (data.status === "tayyor" && !data.paid){
-      h += `<p class="note">Ish tayyor. Toʻlov tasdiqlangach natija shu yerda chiqadi.</p>`;
-    }
-    box.innerHTML = h; box.classList.remove("hidden");
-    const cb = $("#confirmBtn");
-    if (cb) cb.addEventListener("click", async () => {
-      cb.disabled = true;
-      const { error: e2 } = await sb.rpc("confirm_order", { p_code: code, p_phone: phone });
-      if (e2){ alert("Tasdiqlanmadi. Qayta urinib koʻring."); cb.disabled = false; } else trackOrder();
-    });
+    const list = Array.isArray(data) ? data : [];
+    if (!list.length){ err.textContent = "Bu raqam boʻyicha buyurtma topilmadi. Raqamni tekshiring."; err.classList.remove("hidden"); return; }
+    box.innerHTML = `<p class="note">Jami buyurtmalar: ${list.length}</p>` + list.map(orderCardHtml).join("");
   } catch(ex){ err.textContent = "Tekshirib boʻlmadi. Internetni tekshirib, qayta urinib koʻring."; err.classList.remove("hidden"); }
   finally { btn.disabled = false; btn.textContent = "Tekshirish"; }
 }
 $("#tBtn").addEventListener("click", trackOrder);
+$("#tPhone").addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); trackOrder(); } });
+$("#tResult").addEventListener("click", async e => {
+  const cb = e.target.closest("[data-confirm]"); if (!cb) return;
+  cb.disabled = true;
+  const { error } = await sb.rpc("confirm_order", { p_code: cb.dataset.confirm, p_phone: $("#tPhone").value.trim() });
+  if (error){ alert("Tasdiqlanmadi. Qayta urinib koʻring."); cb.disabled = false; } else trackOrder();
+});
 
 /* ============ ADMIN ============ */
 let tab = "orders";
