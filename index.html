@@ -201,6 +201,7 @@ footer a{color:var(--mute)}
           </div>
           <div class="field"><label for="oService">Xizmat turi</label><select id="oService"></select></div>
           <div class="field"><label for="oNote">Nima kerak? (ixtiyoriy)</label><textarea id="oNote" placeholder="Masalan: 30 soniyalik reklama roligi, material bor"></textarea></div>
+          <div class="field"><label for="oReceipt">To‘lov cheki (rasm)</label><input id="oReceipt" type="file" accept="image/jpeg,image/png,image/webp" required><p class="note">JPG, PNG yoki WEBP. Maksimal hajmi 5 MB.</p></div>
           <p class="err hidden" id="oErr"></p>
           <button class="btn" type="submit" id="oBtn">Buyurtmani yuborish</button>
         </form>
@@ -359,12 +360,20 @@ $("#orderForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = $("#oName").value.trim(), phone = $("#oPhone").value.trim();
   const service = $("#oService").value, note = $("#oNote").value.trim();
+  const receipt = $("#oReceipt").files[0];
   const err = $("#oErr"); err.classList.add("hidden");
+  if (!receipt){ err.textContent = "To‘lov chekini rasm sifatida yuklang."; err.classList.remove("hidden"); return; }
+  if (!/^image\/(jpeg|png|webp)$/.test(receipt.type) || receipt.size > 5 * 1024 * 1024){ err.textContent = "Faqat JPG, PNG yoki WEBP rasm yuklang (5 MB gacha)."; err.classList.remove("hidden"); return; }
   if (name.length < 2){ err.textContent = "Ismingizni kiriting."; err.classList.remove("hidden"); $("#oName").focus(); return; }
   if (phone.replace(/\D/g, "").length < 9){ err.textContent = "Telefon raqamni toʻliq kiriting."; err.classList.remove("hidden"); $("#oPhone").focus(); return; }
   const btn = $("#oBtn"); btn.disabled = true; btn.textContent = "Yuborilmoqda...";
   try {
-    await db.save("orders", { name, phone, service, note });
+    const fileExt = receipt.name.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const filePath = `${crypto.randomUUID()}.${fileExt}`;
+    const { error: uploadError } = await sb.storage.from("payment-receipts").upload(filePath, receipt, { contentType: receipt.type, upsert: false });
+    if (uploadError) throw uploadError;
+    const { error: orderError } = await sb.from("orders").insert({ name, phone, service, note, receipt_url: filePath, payment_status: "pending" });
+    if (orderError){ await sb.storage.from("payment-receipts").remove([filePath]); throw orderError; }
     const text = `Salom! Saytdan buyurtma berdim.\nXizmat: ${service}\nIsm: ${name}\nTelefon: ${phone}` + (note ? `\nIzoh: ${note}` : "");
     const tg = $("#tgBtn");
     if (SETTINGS.telegram){
@@ -453,8 +462,11 @@ async function ordersHtml(){
         <b>${esc(o.name)}</b> — ${esc(o.service)}
         <small><a href="tel:${esc(String(o.phone).replace(/\s/g,""))}">${esc(o.phone)}</a> · ${esc(fmtDate(o.created_at))}</small>
         ${o.note ? `<small>${esc(o.note)}</small>` : ""}
+        <small>To‘lov: <b>${o.payment_status === "approved" ? "Tasdiqlangan" : o.payment_status === "rejected" ? "Rad etilgan" : "Tekshirilmoqda"}</b></small>
+        ${o.receipt_url ? `<button class="btn ghost small" data-receipt="${esc(o.id)}" type="button">Chekni ko‘rish</button>` : '<small>Chek yuklanmagan</small>'}
       </div>
       <div class="btns">
+        ${o.receipt_url ? `<button class="btn small" data-payment="approve:${esc(o.id)}" type="button">Tasdiqlash</button><button class="btn danger small" data-payment="reject:${esc(o.id)}" type="button">Rad etish</button>` : ""}
         <select data-status="${esc(o.id)}" aria-label="Holat">
           ${["yangi","jarayonda","tayyor"].map(s => `<option value="${s}" ${o.status===s?"selected":""}>${s[0].toUpperCase()+s.slice(1)}</option>`).join("")}
         </select>
@@ -541,7 +553,21 @@ async function settingsHtml(){
 /* admin amallari (delegatsiya) */
 $("#tabBody").addEventListener("click", async e => {
   const del = e.target.closest("[data-del]"), ed = e.target.closest("[data-edit]"), cn = e.target.closest("[data-cancel]");
+  const pay = e.target.closest("[data-payment]"), receiptBtn = e.target.closest("[data-receipt]");
   try {
+    if (receiptBtn){
+      const { data, error } = await sb.storage.from("payment-receipts").createSignedUrl((await sb.from("orders").select("receipt_url").eq("id", receiptBtn.dataset.receipt).single()).data.receipt_url, 60);
+      if (error) throw error;
+      window.open(data.signedUrl, "_blank", "noopener");
+    }
+    if (pay){
+      const [action, id] = pay.dataset.payment.split(":");
+      const approved = action === "approve";
+      if (!confirm(approved ? "Ushbu to‘lovni tasdiqlaysizmi?" : "Ushbu to‘lovni rad etasizmi?")) return;
+      const { error } = await sb.from("orders").update({ payment_status: approved ? "approved" : "rejected", paid: approved, rejected: !approved }).eq("id", id);
+      if (error) throw error;
+      await renderTab();
+    }
     if (del){
       if (!confirm("Oʻchirilsinmi?")) return;
       const [t, id] = del.dataset.del.split(":");
