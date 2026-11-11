@@ -490,7 +490,7 @@ $("#receiptFile").addEventListener("change", async () => {
     const url = await db.upload(f, "receipts");
     const { error } = await sb.rpc("attach_receipt", { p_order: CUR_ORDER.id, p_url: url });
     if (error) throw error;
-    try { await sb.functions.invoke("notify", { body: { order_id: CUR_ORDER.id } }); } catch(_) {}
+    await notifyAdmin(CUR_ORDER.id);
     const o = CUR_ORDER;
     const text = `Salom! Saytdan buyurtma berdim va toʻlov qildim.\nXizmat: ${o.service}\nIsm: ${o.name}\nTelefon: ${o.phone}`;
     const tg = $("#tgBtn");
@@ -505,6 +505,19 @@ $("#receiptFile").addEventListener("change", async () => {
     $("#receiptFile").value = "";
   }
 });
+
+/* Adminga Telegram xabar yuborish (xatolarni konsolda ko'rsatadi, 1 marta qayta urinadi) */
+async function notifyAdmin(order_id){
+  for (let i = 0; i < 2; i++){
+    try {
+      const { data, error } = await sb.functions.invoke("notify", { body: { order_id } });
+      if (!error && data && data.ok) return true;
+      console.error("notify xatosi:", error || data);
+    } catch(e){ console.error("notify xatosi:", e); }
+    await new Promise(r => setTimeout(r, 1200));
+  }
+  return false;
+}
 
 /* ============ BUYURTMALARNI KUZATISH (faqat telefon raqam bilan) ============ */
 try { const lp = localStorage.getItem("lastPhone"); if (lp) $("#tPhone").value = lp; } catch(_) {}
@@ -558,7 +571,7 @@ $("#tResult").addEventListener("click", async e => {
         const url = await db.upload(f, "receipts");
         const { error } = await sb.rpc("attach_receipt", { p_order: rs.dataset.resend, p_url: url });
         if (error) throw error;
-        try { await sb.functions.invoke("notify", { body: { order_id: rs.dataset.resend } }); } catch(_) {}
+        await notifyAdmin(rs.dataset.resend);
         trackOrder();
       } catch(ex){ alert("Chek yuborilmadi. Qayta urinib koʻring."); rs.disabled = false; rs.textContent = "Toʻlov chekini yuborish"; }
     };
