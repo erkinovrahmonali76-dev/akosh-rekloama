@@ -199,6 +199,12 @@ footer a{color:var(--mute)}
     <section class="block" id="buyurtma">
       <div class="wrap">
         <div class="head"><h2>Buyurtma qoldirish</h2><p>Ikki daqiqa vaqt oladi.</p></div>
+        <div class="formcard" style="max-width:640px;margin-bottom:18px;background:#fff8dc">
+          <h3 style="font-size:1.05rem;margin-bottom:10px">To‘lov rekvizitlari</h3>
+          <p style="margin:0 0 8px"><b>Karta egasi:</b> Boratova Zarnigor</p>
+          <p style="margin:0 0 8px"><b>Karta:</b> 6262 •••• •••• 2691</p>
+          <p class="note" style="margin:0">Xavfsizlik uchun to‘liq karta raqami saytda ochiq ko‘rsatilmaydi. To‘lov qilishdan oldin karta egasi va summani Telegram orqali tasdiqlang. To‘lovdan keyin chekni buyurtma formasiga yuklang.</p>
+        </div>
         <form class="formcard" id="orderForm" novalidate>
           <div class="two">
             <div class="field"><label for="oName">Ismingiz</label><input id="oName" autocomplete="name" required></div>
@@ -223,6 +229,15 @@ footer a{color:var(--mute)}
           <div class="field"><label for="trackCode">4 xonali buyurtma kodi</label><input id="trackCode" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="1234" required></div>
           <p class="err hidden" id="trackErr"></p>
           <button class="btn" type="submit" id="trackBtn">Buyurtmalarimni ko‘rish</button><div id="trackResults" aria-live="polite"></div>
+        </form>
+        <div style="height:24px"></div>
+        <div class="head"><h2>Kod orqali video yuklash</h2><p>Buyurtma yuborilgandan keyin ham video qo‘shishingiz mumkin.</p></div>
+        <form class="track-card" id="codeVideoForm">
+          <div class="field"><label for="uploadPhone">Telefon raqam</label><input id="uploadPhone" type="tel" placeholder="+998 90 123 45 67" required></div>
+          <div class="field"><label for="uploadCode">4 xonali buyurtma kodi</label><input id="uploadCode" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="1234" required></div>
+          <div class="field"><label for="extraVideo">Qo‘shimcha video</label><input id="extraVideo" type="file" accept="video/mp4,video/quicktime,video/webm" required><p class="note">MP4, MOV yoki WEBM. Maksimal hajmi 45 MB.</p></div>
+          <p class="err hidden" id="codeVideoErr"></p>
+          <button class="btn" type="submit" id="codeVideoBtn">Videoni buyurtmaga biriktirish</button>
         </form>
       </div>
     </section>
@@ -392,7 +407,7 @@ $("#orderForm").addEventListener("submit", async e => {
     if(error)throw error;
     $("#orderForm").classList.add("hidden");
     $("#oDone").innerHTML=`<p><b>Buyurtmangiz qabul qilindi!</b></p><p>4 xonali buyurtma kodingiz:</p><div class="code-view">${esc(order.customer_code||"—")}</div><p class="note">Telefon raqamingiz va ushbu kodni saqlang. Keyingi buyurtmada ham yangi kod beriladi.</p>`;
-    $("#oDone").classList.remove("hidden");$("#trackPhone").value=phone;if(order.customer_code)$("#trackCode").value=order.customer_code;
+    $("#oDone").classList.remove("hidden");$("#trackPhone").value=phone;$("#uploadPhone").value=phone;if(order.customer_code){$("#trackCode").value=order.customer_code;$("#uploadCode").value=order.customer_code;}
   }catch(ex){
     console.error(ex);err.textContent="Buyurtma yuborilmadi: "+(ex.message||ex.details||"Xatolik");err.classList.remove("hidden");
     if(rp)await sb.storage.from("payment-receipts").remove([rp]);if(vp)await sb.storage.from("customer-videos").remove([vp]);
@@ -411,6 +426,24 @@ $("#trackForm").addEventListener("submit",async e=>{
     out.innerHTML=data.map(o=>`<div class="order-result"><b>${esc(o.service||"Video montaj")}</b><p>Video turi: ${esc(o.video_type||"—")}</p><p>Holati: <b>${esc(labels[o.status]||o.status||"Kutilmoqda")}</b></p><p>To‘lov: ${esc(o.payment_status==="approved"?"Tasdiqlangan":o.payment_status==="rejected"?"Rad etilgan":"Tekshirilmoqda")}</p><p class="note">${esc(fmtDate(o.created_at))}</p>${o.output_url?`<a class="btn small" href="${esc(o.output_url)}" target="_blank" rel="noopener">Tayyor videoni ko‘rish</a>`:""}</div>`).join("");
   }catch(ex){console.error(ex);err.textContent="Tekshirib bo‘lmadi: "+(ex.message||"Bazani tekshiring.");err.classList.remove("hidden");}
   finally{btn.disabled=false;btn.textContent="Buyurtmalarimni ko‘rish";}
+});
+
+$("#codeVideoForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const phone=$("#uploadPhone").value.trim(), code=$("#uploadCode").value.trim(), file=$("#extraVideo").files[0];
+  const err=$("#codeVideoErr"), btn=$("#codeVideoBtn"); err.classList.add("hidden");
+  if(!/^\d{4}$/.test(code)){err.textContent="4 xonali buyurtma kodini kiriting.";err.classList.remove("hidden");return;}
+  if(!file || !file.type.startsWith("video/") || file.size>45*1024*1024){err.textContent="45 MB gacha bo‘lgan video faylni tanlang.";err.classList.remove("hidden");return;}
+  btn.disabled=true;btn.textContent="Yuklanmoqda...";let path=null;
+  try{
+    const ext=file.name.split(".").pop().toLowerCase().replace(/[^a-z0-9]/g,"")||"mp4";
+    path=`${crypto.randomUUID()}.${ext}`;
+    const up=await sb.storage.from("customer-videos").upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
+    const {data,error}=await sb.rpc("attach_order_video_by_phone_code",{p_phone:phone,p_code:code,p_video_path:path});if(error)throw error;
+    if(!data){await sb.storage.from("customer-videos").remove([path]);throw new Error("Telefon raqami va kodga mos buyurtma topilmadi.");}
+    alert("Video buyurtmangizga biriktirildi!");$("#codeVideoForm").reset();
+  }catch(ex){console.error(ex);err.textContent=ex.message||"Video yuklanmadi.";err.classList.remove("hidden");if(path)await sb.storage.from("customer-videos").remove([path]);}
+  finally{btn.disabled=false;btn.textContent="Videoni buyurtmaga biriktirish";}
 });
 
 /* ============ ADMIN ============ */
