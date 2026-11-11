@@ -650,8 +650,9 @@ async function renderTab(){
 
 async function ordersHtml(){
   const list = await db.list("orders");
-  if (!list.length) return '<div class="empty">Hozircha buyurtma yoʻq. Yangi buyurtmalar shu yerda chiqadi.</div>';
-  return list.map(o => `
+  const refresh = '<div style="margin-bottom:12px"><button class="btn ghost small" type="button" data-refresh>Yangilash</button></div>';
+  if (!list.length) return refresh + '<div class="empty">Hozircha buyurtma yoʻq. Yangi buyurtmalar shu yerda chiqadi.</div>';
+  return refresh + list.map(o => `
     <div class="item stat-${esc(o.status || "yangi")}">
       <div class="info">
         <b>${esc(o.name)}</b> — ${esc(o.service)}
@@ -669,7 +670,7 @@ async function ordersHtml(){
           : (o.receipt_url
             ? `<button class="btn small" type="button" data-paid="${esc(o.id)}:1">Tasdiqlash</button>
                <button class="btn danger small" type="button" data-reject="${esc(o.id)}">Rad etish</button>`
-            : `<span class="note">Chek kutilmoqda${o.pay_rejected ? " (oldingi chek rad etilgan)" : ""}</span>`)}
+            : `<span class="note">Chek kutilmoqda${o.rejected ? " (oldingi chek rad etilgan)" : ""}</span>`)}
         <select data-status="${esc(o.id)}" aria-label="Holat">
           ${["yangi","jarayonda","tayyor"].map(s => `<option value="${s}" ${o.status===s?"selected":""}>${s[0].toUpperCase()+s.slice(1)}</option>`).join("")}
         </select>
@@ -756,6 +757,7 @@ async function settingsHtml(){
 
 /* admin amallari (delegatsiya) */
 $("#tabBody").addEventListener("click", async e => {
+  if (e.target.closest("[data-refresh]")){ renderTab(); return; }
   const del = e.target.closest("[data-del]"), ed = e.target.closest("[data-edit]"), cn = e.target.closest("[data-cancel]");
   try {
     if (del){
@@ -768,7 +770,7 @@ $("#tabBody").addEventListener("click", async e => {
     const rj = e.target.closest("[data-reject]");
     if (rj){
       if (!confirm("Toʻlov cheki rad etilsinmi? Mijoz yangi chek yuborishi mumkin boʻladi.")) return;
-      await db.save("orders", { id: rj.dataset.reject, paid: false, receipt_url: null, pay_rejected: true });
+      await db.save("orders", { id: rj.dataset.reject, paid: false, receipt_url: null, rejected: true });
       renderTab();
     }
     if (ed){ editing = ed.dataset.edit; await renderTab(); $("#tabBody").scrollIntoView({ behavior:"smooth" }); }
